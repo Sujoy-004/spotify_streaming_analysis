@@ -2,7 +2,7 @@
 
 A Streamlit-based data analysis app for exploring and visualizing Spotify streaming data.  
 This app processes your Spotify dataset, generates insights, and presents them with interactive visualizations.
-App Link : https://hyzrcwegol6ernvaopsv7k.streamlit.app/
+- App Link : https://hyzrcwegol6ernvaopsv7k.streamlit.app/
 ---
 
 ## 📌 Features
