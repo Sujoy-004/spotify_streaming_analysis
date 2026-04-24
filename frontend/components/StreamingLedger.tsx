@@ -11,14 +11,14 @@ const PAGE_SIZE = 50;
 const StatusPill = ({ status }: { status: string }) => {
   const baseClass = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase";
   
-  if (status === 'Verified') return (
+  if (status === 'Elite') return (
     <div className={`${baseClass} bg-teal-900/40 text-teal-300 border border-teal-800/50`}>
-      <CheckCircle2 size={10} /> VERIFIED
+      <CheckCircle2 size={10} /> ELITE
     </div>
   );
-  if (status === 'Emerging') return (
-    <div className={`${baseClass} bg-amber-900/40 text-amber-300 border border-amber-800/50`}>
-      <TrendingUp size={10} /> EMERGING
+  if (status === 'Premier') return (
+    <div className={`${baseClass} bg-indigo-900/40 text-indigo-300 border border-indigo-800/50`}>
+      <TrendingUp size={10} /> PREMIER
     </div>
   );
   return (
@@ -50,8 +50,8 @@ const StreamingLedger = ({ data }: StreamingLedgerProps) => {
     return sorted.map((row, idx) => {
       const percentile = (idx / total) * 100;
       let status = 'Active';
-      if (percentile <= 10) status = 'Verified';
-      else if (percentile >= 80) status = 'Emerging';
+      if (percentile <= 5) status = 'Elite';
+      else if (percentile <= 20) status = 'Premier';
       
       return { ...row, status };
     });
@@ -125,12 +125,12 @@ const StreamingLedger = ({ data }: StreamingLedgerProps) => {
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[9px] uppercase font-bold text-arctic-500">ENG</span>
-                      <span className="text-[10px] text-arctic-300 font-mono">{(row.Energy || 0 * 100).toFixed(0)}%</span>
+                      <span className="text-[9px] uppercase font-bold text-arctic-500">YOUTUBE</span>
+                      <span className="text-[10px] text-arctic-300 font-mono">{((row as any).YouTube_Views / 1e6 || 0).toFixed(0)}M</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-[9px] uppercase font-bold text-arctic-500">VAL</span>
-                      <span className="text-[10px] text-arctic-300 font-mono">{(row.Valence || 0 * 100).toFixed(0)}%</span>
+                      <span className="text-[9px] uppercase font-bold text-arctic-500">POP</span>
+                      <span className="text-[10px] text-arctic-300 font-mono">{(row as any).Popularity || 0}%</span>
                     </div>
                   </div>
                 </td>

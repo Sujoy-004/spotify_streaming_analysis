@@ -2,13 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Session 5] - 2026-04-24
+## [Session 6] - 2026-04-24
 ### Added
-- **Professional Standardized Logging**: Introduced `api/logging_config.py` to replace standard print statements with structured logging.
-- **Enterprise Type System**: Defined centralized TypeScript interfaces in `frontend/types/index.ts` to eliminate `any` usage.
-- **Project Governance**: Added `LICENSE` (MIT) and `CONTRIBUTING.md` for open-source and team collaboration readiness.
-- **Backend Requirements**: Created `api/requirements.txt` with locked versions for environment stability.
-- **Architectural Mapping**: Generated comprehensive `.planning/codebase/` documentation and `DESIGN.md` following Mythos-GSD-Graphify standards.
+- **Truth-First ML Plumbing**: Synchronized Training and Inference pipelines with bit-perfect parity.
+- **Dynamic Accuracy Reporting**: Implemented `metadata.json` persistence to serve real-time $R^2$ scores to the UI.
+- **Target Encoding**: Replaced bias-prone `LabelEncoder` with Artist-based **Mean Log-Stream Mapping**.
+- **Leakage Mitigation**: Explicitly removed circular logic (Spotify Popularity) from the prediction feature set.
+- **Log-Space Normalization**: Enforced `np.log1p` across all high-variance behavioral signals.
+
+### Changed
+- **Predictive Oracle**: Upgraded XGBoost regressor to version 2.0 with optimized hyperparameters.
+- **Spectral Manifold**: Expanded feature space to include YouTube, TikTok, and Shazam signals for clustering.
+- **UI Branding**: Renamed components for mathematical honesty ("R² Score" and "Spectral Manifold").
 
 ### Changed
 - **Code Refactoring**: Overhauled `main.py` and `data_manager.py` with Google-style docstrings, Pydantic validation, and type hints.

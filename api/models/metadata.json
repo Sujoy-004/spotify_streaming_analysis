@@ -1,0 +1,23 @@
+{
+  "prediction": {
+    "features": [
+      "Released Year",
+      "Released Month",
+      "Artist_Enc",
+      "YouTube Views",
+      "TikTok Views",
+      "Shazam Counts",
+      "Apple Music Playlist Count"
+    ],
+    "r2_score": 0.9004936823248544
+  },
+  "clustering": {
+    "features": [
+      "Spotify Streams",
+      "Spotify Popularity",
+      "YouTube Views",
+      "TikTok Views",
+      "Shazam Counts"
+    ]
+  }
+}

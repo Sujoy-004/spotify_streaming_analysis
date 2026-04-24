@@ -1,142 +1,145 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split, KFold, cross_validate
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import RobustScaler, QuantileTransformer
 from sklearn.decomposition import PCA
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
 import joblib
 import os
+import xgboost as xgb
+import json
+import datetime
+from logging_config import setup_logging, logger
 
-# ---------------------------------------------------------
-# Mythos Protocol: ML Training Engine
-# This script handles feature engineering, model training, 
-# and persistence for the Spotify Discovery Platform.
-# ---------------------------------------------------------
+setup_logging()
 
 class SpotifyMLTrainer:
+    """
+    Sovereign ML Trainer implementing Production-Grade Pipelines.
+    Enforces Strict Parity via unified Pipeline artifacts.
+    """
     def __init__(self, data_path='../Most_Streamed_Spotify_Songs_2024.csv', models_dir='models'):
-        self.data_path = data_path
-        self.models_dir = models_dir
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.data_path = os.path.join(os.path.dirname(self.base_dir), 'Most_Streamed_Spotify_Songs_2024.csv')
+        self.models_dir = os.path.join(self.base_dir, models_dir)
         self.df = None
-        self.label_encoders = {}
+        self.metadata = {
+            "version": "2.1.0-Elite",
+            "trained_at": datetime.datetime.now().isoformat(),
+            "prediction": {"features": [], "r2_score": 0, "feature_importance": {}},
+            "clustering": {"features": [], "n_clusters": 6}
+        }
         
-        # Ensure models directory exists
         if not os.path.exists(self.models_dir):
             os.makedirs(self.models_dir)
 
     def load_and_clean(self):
-        """Loads data with encoding resilience and performs basic cleaning."""
-        print(f"--- Loading data from {self.data_path} ---")
-        
-        # Professional approach: handle thousands and quotes during read
+        logger.info(f"Ingesting dataset from {self.data_path}")
         try:
             self.df = pd.read_csv(self.data_path, encoding='utf-8', thousands=',')
         except UnicodeDecodeError:
             self.df = pd.read_csv(self.data_path, encoding='latin1', thousands=',')
         
-        print(f"Initial load: {len(self.df)} rows.")
         self.df.columns = self.df.columns.str.strip()
+        self.df = self.df[self.df['Artist'] != 'xSyborg']
         
-        # Mapping actual column names: 'Artist', 'Release Date', 'Spotify Streams'
-        print("Parsing Release Date...")
-        self.df['Release Date'] = pd.to_datetime(self.df['Release Date'], errors='coerce')
-        self.df['Released Year'] = self.df['Release Date'].dt.year
-        self.df['Released Month'] = self.df['Release Date'].dt.month
-        
-        # Force numeric conversion for key columns
-        for col in ['Spotify Streams', 'Spotify Popularity']:
+        # Numeric Sanitization
+        numeric_cols = ['Spotify Streams', 'YouTube Views', 'TikTok Views', 'Shazam Counts', 'Apple Music Playlist Count']
+        for col in numeric_cols:
             if col in self.df.columns:
-                self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
+                self.df[col] = pd.to_numeric(self.df[col].astype(str).str.replace(',', '').str.replace('"', ''), errors='coerce').fillna(0)
         
-        # Debugging sample:
-        print(f"Sample 'Spotify Streams' after cleaning: {self.df['Spotify Streams'].head().values}")
-        
-        # Drop rows with critical missing values for BOTH models
-        self.df = self.df.dropna(subset=['Spotify Streams', 'Artist', 'Released Year', 'Released Month', 'Spotify Popularity'])
-        
-        # Remove any non-finite values (Inf/-Inf) that might break scaling
-        self.df = self.df[np.isfinite(self.df['Spotify Streams'])]
-        self.df = self.df[np.isfinite(self.df['Spotify Popularity'])]
-        
-        print(f"Final training set size: {len(self.df)} tracks.")
-            
+        self.df = self.df[self.df['Spotify Streams'] > 0]
+        self.df['log_streams'] = np.log1p(self.df['Spotify Streams'])
         return self.df
 
     def train_popularity_predictor(self):
-        """
-        Trains a Random Forest Regressor to predict Spotify Streams.
-        Demonstrates capability in Feature Engineering and Regression.
-        """
-        print("\n--- Training Popularity Predictor (Regression) ---")
+        logger.info("Initializing XGBoost Pipeline with Target Encoding parity...")
         
-        # Feature Engineering: Encode Artists
-        le = LabelEncoder()
-        self.df['Artist_Encoded'] = le.fit_transform(self.df['Artist'])
-        self.label_encoders['Artist'] = le
+        # 1. Target Encoding (In-situ for training, dictionary for inference)
+        artist_map = self.df.groupby('Artist')['log_streams'].mean().to_dict()
+        self.df['Artist_Enc'] = self.df['Artist'].map(artist_map)
         
-        # Prepare Features (X) and Target (y)
-        features = ['Released Year', 'Released Month', 'Artist_Encoded', 'Spotify Popularity']
+        features = ['Released Year', 'Released Month', 'Artist_Enc', 'YouTube Views', 'TikTok Views', 'Shazam Counts', 'Apple Music Playlist Count']
+        self.metadata["prediction"]["features"] = features
+        
         X = self.df[features]
-        y = self.df['Spotify Streams']
+        y = self.df['log_streams']
         
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        # 2. Pipeline Definition (Guarantees Parity)
+        # We use RobustScaler to handle outlier-heavy streaming signals
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', RobustScaler(), features)
+            ])
+
+        model_pipeline = Pipeline(steps=[
+            ('preprocessor', preprocessor),
+            ('regressor', xgb.XGBRegressor(
+                n_estimators=1200,
+                learning_rate=0.02,
+                max_depth=7,
+                subsample=0.85,
+                colsample_bytree=0.85,
+                tree_method='hist', # Faster, production-friendly
+                random_state=42
+            ))
+        ])
+
+        # 3. Rigorous Cross-Validation
+        kf = KFold(n_splits=5, shuffle=True, random_state=42)
+        cv_results = cross_validate(model_pipeline, X, y, cv=kf, scoring='r2', return_train_score=True)
         
-        # Initialize and Train
-        model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
-        model.fit(X_train, y_train)
+        mean_r2 = cv_results['test_score'].mean()
+        logger.info(f"Mean CV R^2: {mean_r2:.4f}")
+
+        # 4. Final Fit & Feature Importance
+        model_pipeline.fit(X, y)
         
-        # Evaluation
-        score = model.score(X_test, y_test)
-        print(f"Model R^2 Score: {score:.4f}")
+        # Extract importance from the regressor step
+        regressor = model_pipeline.named_steps['regressor']
+        importances = dict(zip(features, regressor.feature_importances_.tolist()))
+        self.metadata["prediction"]["feature_importance"] = importances
+        self.metadata["prediction"]["r2_score"] = float(mean_r2)
+
+        # 5. Persist Unified Artifacts
+        joblib.dump(model_pipeline, os.path.join(self.models_dir, 'oracle_pipeline.joblib'))
+        joblib.dump(artist_map, os.path.join(self.models_dir, 'artist_target_encoder.joblib'))
         
-        # Save Model and Encoder
-        joblib.dump(model, os.path.join(self.models_dir, 'popularity_regressor.joblib'))
-        joblib.dump(le, os.path.join(self.models_dir, 'artist_encoder.joblib'))
-        print("Model and Encoder saved to 'models/'")
-        
-        return score
+        return mean_r2
 
     def train_discovery_clusters(self):
-        """
-        Applies K-Means clustering to group songs by streaming behavior.
-        Uses PCA for dimension reduction (visual proof of ML depth).
-        """
-        print("\n--- Training Discovery Clusters (Unsupervised) ---")
+        logger.info("Initializing Manifold Pipeline (Clustering)...")
         
-        # Select features for clustering
-        cluster_features = ['Spotify Streams', 'Spotify Popularity']
+        cluster_features = ['Spotify Streams', 'YouTube Views', 'TikTok Views', 'Shazam Counts']
+        self.metadata["clustering"]["features"] = cluster_features
         X = self.df[cluster_features]
         
-        # Scaling is critical for K-Means
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
+        # Pipeline: Log1p -> RobustScaler -> PCA -> KMeans
+        # Note: Log1p is handled manually before pipeline to ensure non-linear manifold
+        X_log = X.apply(np.log1p)
         
-        # Fit K-Means (Optimal k found via Elbow Method - internal reasoning)
-        kmeans = KMeans(n_clusters=5, random_state=42, n_init=10)
-        clusters = kmeans.fit_predict(X_scaled)
+        manifold_pipeline = Pipeline(steps=[
+            ('scaler', RobustScaler()),
+            ('pca', PCA(n_components=2)),
+            ('kmeans', KMeans(n_clusters=6, random_state=42, n_init=15))
+        ])
         
-        # Dimension Reduction for UI Visualization (2D Projection)
-        pca = PCA(n_components=2)
-        pca_result = pca.fit_transform(X_scaled)
+        manifold_pipeline.fit(X_log)
         
-        # Attach results to dataframe for persistence check
-        self.df['cluster'] = clusters
-        self.df['pca_x'] = pca_result[:, 0]
-        self.df['pca_y'] = pca_result[:, 1]
+        # Save Artifacts
+        joblib.dump(manifold_pipeline, os.path.join(self.models_dir, 'discovery_manifold.joblib'))
         
-        # Save Clustering Artifacts
-        joblib.dump(kmeans, os.path.join(self.models_dir, 'discovery_clusters.joblib'))
-        joblib.dump(scaler, os.path.join(self.models_dir, 'cluster_scaler.joblib'))
-        joblib.dump(pca, os.path.join(self.models_dir, 'cluster_pca.joblib'))
-        
-        print(f"Clusters generated. Silhouette-style logic applied for k=5.")
-        return clusters
+        with open(os.path.join(self.models_dir, 'metadata.json'), 'w') as f:
+            json.dump(self.metadata, f, indent=2)
+            
+        logger.info("Manifold synthesized. Governance metadata persisted.")
 
 if __name__ == "__main__":
     trainer = SpotifyMLTrainer()
     trainer.load_and_clean()
     trainer.train_popularity_predictor()
     trainer.train_discovery_clusters()
-    print("\n--- All ML Tasks Complete ---")
+    logger.info("MISSION COMPLETE: Production Pipelines Stabilized.")

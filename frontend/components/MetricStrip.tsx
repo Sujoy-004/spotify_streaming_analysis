@@ -54,8 +54,8 @@ const MetricStrip = ({ metrics, loading }: MetricStripProps) => {
         loading={loading}
       />
       <MetricCard 
-        label="Model Accuracy" 
-        value={`${Math.round((metrics?.model_accuracy || 0) * 100)}%`} 
+        label="R² Score (XGBoost)" 
+        value={`${((metrics?.model_accuracy || 0) * 100).toFixed(1)}%`} 
         loading={loading}
       />
     </>

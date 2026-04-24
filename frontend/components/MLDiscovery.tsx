@@ -71,9 +71,14 @@ const MLDiscovery = () => {
                <div className="p-2 bg-arctic-accent/10 rounded-lg border border-arctic-accent/20">
                  <Sparkles size={20} className="text-arctic-accent" />
                </div>
-               <h2 className="text-2xl font-bold text-white tracking-tight">Neural Spectral Manifold</h2>
+               <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                 <Layers className="w-5 h-5 text-teal-400" />
+                 Spectral Manifold (PCA)
+               </h2>
             </div>
-            <p className="text-[10px] text-arctic-600 uppercase tracking-[0.3em] font-bold">Registry Analysis: Dimensionality Reduction via PCA Decomposition</p>
+            <p className="text-slate-400 text-sm mt-1">
+              Visualizing the high-dimensional convergence of Spotify, YouTube, and TikTok signals across 6 behavioral clusters.
+            </p>
           </div>
 
           <div className="h-[500px] w-full relative z-10">

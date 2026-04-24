@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field
 import os
 
 # Internal Imports
-from .data_manager import SpotifyDataManager
-from .logging_config import setup_logging, logger
+from data_manager import SpotifyDataManager
+from logging_config import setup_logging, logger
 
 # Initialize Logging
 setup_logging()
@@ -44,7 +44,10 @@ class PredictionRequest(BaseModel):
     artist: str = Field(..., example="Taylor Swift")
     year: int = Field(2024, example=2024)
     month: int = Field(1, example=1)
-    popularity: float = Field(..., example=85.0)
+    youtube_views: float = Field(0, example=100000000)
+    tiktok_views: float = Field(0, example=50000000)
+    shazam_counts: float = Field(0, example=1000000)
+    apple_music_playlists: float = Field(0, example=500)
 
 class HealthResponse(BaseModel):
     status: str
@@ -96,7 +99,15 @@ def predict_popularity(req: PredictionRequest):
     """Executes Random Forest inference for stream count projection."""
     logger.info(f"Inference request received for artist: {req.artist}")
     result = data_manager.predict_popularity(
-        req.artist, req.year, req.month, req.popularity
+        req.artist, 
+        {
+            'Released Year': req.year,
+            'Released Month': req.month,
+            'YouTube Views': req.youtube_views,
+            'TikTok Views': req.tiktok_views,
+            'Shazam Counts': req.shazam_counts,
+            'Apple Music Playlist Count': req.apple_music_playlists
+        }
     )
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
