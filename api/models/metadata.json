@@ -1,23 +1,34 @@
 {
+  "version": "2.2.0-Production",
+  "trained_at": "2026-04-25T00:21:08.876433",
   "prediction": {
     "features": [
+      "Artist",
       "Released Year",
       "Released Month",
-      "Artist_Enc",
       "YouTube Views",
       "TikTok Views",
       "Shazam Counts",
       "Apple Music Playlist Count"
     ],
-    "r2_score": 0.9004936823248544
+    "r2_score": 0.6882490880155782,
+    "feature_importance": {
+      "Released Year": 0.12347032129764557,
+      "Released Month": 0.02079595997929573,
+      "YouTube Views": 0.061037566512823105,
+      "TikTok Views": 0.0464726947247982,
+      "Shazam Counts": 0.08782558888196945,
+      "Apple Music Playlist Count": 0.19015754759311676,
+      "Artist": 0.4702402949333191
+    }
   },
   "clustering": {
     "features": [
       "Spotify Streams",
-      "Spotify Popularity",
       "YouTube Views",
       "TikTok Views",
       "Shazam Counts"
-    ]
+    ],
+    "n_clusters": 6
   }
 }

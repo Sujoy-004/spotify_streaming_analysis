@@ -1,81 +1,60 @@
-# Spotify 2024 Discovery | Elite Dashboard
+# Spotify Stream Prediction Dashboard
 
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-05998b?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38bdf8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Aesthetic: Arctic](https://img.shields.io/badge/Aesthetic-Arctic_900-0f172a?style=for-the-badge&logo=vercel)](https://github.com/Sujoy-004/spotify_streaming_analysis)
+Predicting 2024 Spotify track performance using XGBoost and unified machine learning pipelines.
+*Forecasts Spotify streams and groups tracks by engagement patterns.*
 
-A high-fidelity streaming analysis platform and predictive engine designed with a "Quiet Luxury" aesthetic. This project visualizes the 2024 Spotify dataset through neural manifold clustering and provides real-time streaming projections.
+## 📺 How it works (Demo)
+1.  **User Input**: Enter an artist name, release month, and social metrics (YouTube Views, TikTok Views, Shazam Counts).
+2.  **Live Prediction**: The system processes these inputs through a unified pipeline to return a predicted Spotify stream count.
+3.  **Segment Mapping**: The track is assigned to one of 6 clusters based on cross-platform metrics and plotted on an interactive 2D map.
 
-## Dashboard Preview
+## ⚙️ System Flow
+**Input** (Raw Metrics) → **Unified Pipeline** (Log Scaling + Artist Target Encoding) → **XGBoost Engine** → **Stream Forecast**
 
-![Dashboard](./docs/screenshot.png)
+## 🛠️ Tech Stack
+*   **Machine Learning**: XGBoost, Scikit-Learn, Joblib
+*   **Backend**: FastAPI, Pydantic
+*   **Frontend**: Next.js 15, Tailwind CSS, Shadcn/UI
 
-## Core Features
+## 🧠 Machine Learning Approach
+*   **Model**: XGBoost Regressor trained on 2024 streaming data.
+*   **Unification**: Single-object Scikit-Learn pipelines ensure training logic and live inference logic are identical.
+*   **Data Handling**: Custom transformers handle the skew of streaming counts (via log1p) and high-cardinality strings (artist names).
+*   **Parity Verification**: The script `verify_parity.py` proves that the live API results match training outputs exactly.
 
-- **Neural Spectral Manifold**: Interactive 2D visualization of high-dimensional track features using PCA clustering.
-- **Predictive Oracle**: AI-powered streaming forecaster using Random Forest regression.
-- **Arctic Design System**: Premium dark-mode UI with a curated color scale (Arctic-900 to Arctic-400).
-- **Streaming Ledger**: A high-performance data grid for exploring track-level metadata and cluster assignments.
-- **Real-time Analytics**: Instant calculation of total streams, artist density, and model accuracy metrics.
+## 📂 Project Structure
+*   `api/`: FastAPI server and model orchestration.
+*   `frontend/`: Next.js 15 dashboard UI.
+*   `research/`: Data analysis and model experimentation notebooks.
+*   `api/models/`: Production pipeline artifacts (`.joblib`).
 
-## Technical Architecture
+## ⚡ Setup and Run
 
-```text
-[ CLIENT ] <--- Port 3000 ---> [ NEXT.JS 15 (APP ROUTER) ]
-                                     |
-                                     | (Internal Proxy / Rewrites)
-                                     v
-[ BACKEND ] <--- Port 8001 ---> [ FASTAPI (PYTHON 3.10+) ]
-                                     |
-            ---------------------------------------------------
-            |                         |                       |
-[ CSV DATA ENGINE ]       [ PCA MANIFOLD ]         [ RF REGRESSOR ]
-```
-
-## Setup & Installation
-
-### 1. Backend Service
+### 1. Backend
 ```bash
 cd api
 pip install -r requirements.txt
-python main.py
+python train_ml.py   # Train and save unified pipelines
+uvicorn main:app --reload
 ```
-*Server running at `http://127.0.0.1:8001`*
 
-### 2. Frontend Dashboard
+### 2. Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-*Dashboard available at `http://localhost:3000`*
 
-## ML Methodology (Sovereign 2.1)
+## 📊 Sample Result
 
-### Unified Pipeline Sovereignty
-We implement a **Unified Pipeline Architecture** where preprocessing, scaling, and models are encapsulated into single-artifact `.joblib` files. This guarantees 100% parity between training and inference, mitigating the risk of data drift or implementation mismatch.
+**Prediction:**
+*   **Input**: Taylor Swift, May Release, 50M YouTube Views, 30M TikTok Views.
+*   **Output**: `202,623,408` Predicted Spotify Streams.
 
-### Spectral Manifold (PCA)
-We utilize a **Log-Space Manifold Pipeline** involving:
-- **Non-linear Transformation**: `np.log1p` scaling to handle heavy-tailed streaming volume.
-- **Robust Scaling**: Outlier-resilient feature normalization.
-- **PCA Dimensionality Reduction**: Mapping 4+ cross-platform signals into a 2D discovery manifold.
-- **K-Means Clustering**: Behavioral segmentation into 6 distinct track archetypes.
+**Clustering:**
+*   **Output**: Track assigned to Cluster 0 (based on engagement patterns).
 
-### Predictive Oracle (XGBoost)
-The **Predictive Oracle** is an **XGBoost 2.0 Regressor** featuring:
-- **Target Encoding**: Managed via mean log-stream mapping for high-cardinality artist data.
-- **Leakage Mitigation**: Strict exclusion of circular indicators (e.g., Spotify Popularity).
-- **Cross-Validation**: Validated with a **0.90 R² score** across 5-fold shuffled CV.
-- **Feature Importance**: Dynamic weighting of YouTube, TikTok, and Shazam signals.
-
-## UI Design Tokens (Arctic Scale)
-- **Primary**: `#0f172a` (Arctic-900)
-- **Secondary**: `#1e293b` (Arctic-800)
-- **Border**: `#334155` (Arctic-700)
-- **Accent**: `#2dd4bf` (Teal-accent)
-- **Text**: `#f8fafc` (Slate-50)
-
----
-*Developed for Academic Excellence & Production Performance.*
+## 📈 Why this project matters
+*   **Zero Drift**: Eliminates "it worked in my notebook" errors by deploying a single, serialized pipeline for all preprocessing and inference.
+*   **Real-World Preprocessing**: Correctly handles non-linear relationships and outlier-heavy data typical of the music industry.
+*   **Full-Stack Integrity**: Demonstrates a complete engineering lifecycle: from raw CSV cleaning to an interactive dashboard.
