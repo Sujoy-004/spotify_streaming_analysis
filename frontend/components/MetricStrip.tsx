@@ -1,29 +1,41 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { SpotifyMetrics } from '../types';
 
-interface MetricProps {
+interface MetricCardProps {
   label: string;
   value: string | number;
   loading?: boolean;
 }
 
-const MetricCard = ({ label, value, loading }: MetricProps) => (
+/**
+ * Atomic metric card component for displaying key performance indicators.
+ */
+const MetricCard = ({ label, value, loading }: MetricCardProps) => (
   <motion.div 
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.35 }}
-    className="bg-arctic-800 border border-arctic-700 rounded-xl p-4 flex flex-col"
+    className="bg-arctic-800 border border-arctic-700 rounded-xl p-4 flex flex-col hover:border-arctic-600 transition-colors"
   >
-    <span className="text-xs text-arctic-400 uppercase tracking-widest mb-1">{label}</span>
+    <span className="text-xs text-arctic-400 uppercase tracking-widest mb-1 font-semibold">{label}</span>
     {loading ? (
-      <div className="h-7 w-24 bg-arctic-700 animate-pulse rounded" />
+      <div className="h-7 w-24 bg-arctic-700 animate-pulse rounded mt-1" />
     ) : (
-      <span className="text-2xl font-medium text-white">{value}</span>
+      <span className="text-2xl font-medium text-white tracking-tight">{value}</span>
     )}
   </motion.div>
 );
 
-const MetricStrip = ({ metrics, loading }: { metrics: any, loading: boolean }) => {
+interface MetricStripProps {
+  metrics?: SpotifyMetrics;
+  loading: boolean;
+}
+
+/**
+ * Orchestrates the display of aggregate KPIs across the dashboard header.
+ */
+const MetricStrip = ({ metrics, loading }: MetricStripProps) => {
   return (
     <>
       <MetricCard 
